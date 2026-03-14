@@ -1,6 +1,6 @@
 api:
   claude_api_key: "YOUR_CLAUDE_API_KEY"
-  gemini_api_key: "AIzaSyAhRVpwaTccddHgDe1EBlJijRo4_vqizLY"
+  gemini_api_key: "AIzaqizLY"
   use_llm: "gemini"  # or "claude"
 
 training:
