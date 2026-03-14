@@ -1,0 +1,29 @@
+{
+  "task_info": {
+    "data_type": "tabular",
+    "task_type": "multiclass_classification",
+    "num_classes": 3,
+    "num_features": 5,
+    "target_column": "Species"
+  },
+  "config": {
+    "config_id": 3,
+    "learning_rate": 0.01,
+    "batch_size": 64,
+    "optimizer": "Adam",
+    "epochs": 80,
+    "dropout": 0.27425095765348867,
+    "hidden_dims": [
+      128,
+      64,
+      32
+    ]
+  },
+  "feature_names": [
+    "Id",
+    "SepalLengthCm",
+    "SepalWidthCm",
+    "PetalLengthCm",
+    "PetalWidthCm"
+  ]
+}
