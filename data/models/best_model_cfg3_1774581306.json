@@ -1,0 +1,40 @@
+{
+  "task_info": {
+    "data_type": "tabular",
+    "task_type": "binary_classification",
+    "num_classes": 2,
+    "num_features": 13,
+    "target_column": "target"
+  },
+  "config": {
+    "config_id": 3,
+    "learning_rate": 0.0001,
+    "batch_size": 128,
+    "optimizer": "SGD",
+    "epochs": 80,
+    "dropout": 0.34318087631670746,
+    "hidden_dims": [
+      128,
+      64,
+      32
+    ],
+    "hidden_profile": "deep",
+    "input_dim": 13,
+    "adaptive_retry": false
+  },
+  "feature_names": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ]
+}

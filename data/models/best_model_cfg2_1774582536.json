@@ -1,0 +1,46 @@
+{
+  "task_info": {
+    "data_type": "tabular",
+    "task_type": "binary_classification",
+    "num_classes": 2,
+    "num_features": 13,
+    "target_column": "target"
+  },
+  "config": {
+    "config_id": 2,
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "optimizer": "SGD",
+    "epochs": 10,
+    "dropout": 0.4830846732665486,
+    "hidden_dims": [
+      128,
+      64,
+      32,
+      16
+    ],
+    "hidden_profile": "shallow",
+    "input_dim": 13,
+    "adaptive_retry": true,
+    "best_trial_objective": 0.4222222222222223,
+    "mapped_val_accuracy": 0.5777777777777777,
+    "mapped_val_metric": 0.5777777777777777,
+    "final_retrain_val_accuracy": 0.6222222222222222,
+    "final_retrain_val_metric": 0.6222222222222222
+  },
+  "feature_names": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ]
+}

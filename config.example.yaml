@@ -1,0 +1,22 @@
+api:
+  claude_api_key: "YOUR_CLAUDE_API_KEY"
+  gemini_api_key: "YOUR_GEMINI_API_KEY"
+  groq_api_key: "YOUR_GROQ_API_KEY"   # get free key at console.groq.com
+  use_llm: "groq"  # options: gemini | claude | groq
+
+training:
+  max_epochs: 10
+  early_stopping_patience: 3
+  num_optuna_trials: 5
+
+preprocessing:
+  tabular:
+    assume_preprocessed: true
+    encoding_strategy: "label"   # label | onehot
+    remove_outliers: true
+    outlier_iqr_k: 1.5
+
+paths:
+  upload_dir: "data/uploads"
+  models_dir: "data/models"
+  plots_dir: "data/models/plots"

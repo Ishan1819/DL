@@ -1,0 +1,38 @@
+{
+  "task_info": {
+    "data_type": "tabular",
+    "task_type": "multiclass_classification",
+    "num_classes": 6,
+    "num_features": 12,
+    "target_column": "quality"
+  },
+  "config": {
+    "config_id": 1,
+    "learning_rate": 0.0021840074960902,
+    "batch_size": 128,
+    "optimizer": "Adam",
+    "epochs": 5,
+    "dropout": 0.33732743076433075,
+    "hidden_dims": [
+      128,
+      64
+    ],
+    "input_dim": 12
+  },
+  "feature_names": [
+    "Id",
+    "fixed acidity",
+    "volatile acidity",
+    "citric acid",
+    "residual sugar",
+    "chlorides",
+    "free sulfur dioxide",
+    "total sulfur dioxide",
+    "density",
+    "pH",
+    "sulphates",
+    "alcohol"
+  ],
+  "optuna_n_trials": 5,
+  "warm_start": "lcbench_surrogate"
+}
