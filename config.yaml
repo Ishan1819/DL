@@ -1,6 +1,6 @@
 api:
   claude_api_key: "YOUR_CLAUDE_API_KEY"
-  gemini_api_key: "YOUR_GEMINI_API_KEY"
+  gemini_api_key: "AIzaSyCuPCWBg7WtiC5vgfjXIj0vlBlwi4zlzQ4"
   groq_api_key: "YOUR_GROQ_API_KEY"
   use_llm: "groq"  # options: gemini | claude | groq
 
@@ -8,6 +8,7 @@ training:
   max_epochs: 10
   early_stopping_patience: 3
   num_optuna_trials: 5
+  flaml_time_budget: 60
 
 preprocessing:
   tabular:

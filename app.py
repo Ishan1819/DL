@@ -18,6 +18,7 @@ from src.model_selector import build_tabular_model, generate_configs, recommend_
 from src.task_detector import TaskInfo, get_task_info
 from src.trainer import evaluate_model, select_best_model, train_models
 from src.utils import ensure_dir, load_config, save_confusion_matrix, save_text_report_pdf, save_training_curves, setup_logging
+from src.flaml_trainer import train_flaml_baseline
 
 
 setup_logging()
@@ -62,6 +63,8 @@ def _init_state() -> None:
         "llm_chat_history": [],
         "llm_suggestion": None,
         "uploaded_file_token": None,
+        "flaml_model": None,
+        "flaml_metrics": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -127,6 +130,8 @@ if uploaded is not None:
                 st.session_state["test_data"] = None
                 st.session_state["trained_models"] = None
                 st.session_state["best_model_result"] = None
+                st.session_state["flaml_model"] = None
+                st.session_state["flaml_metrics"] = None
 
                 st.success(f"Loaded {uploaded.name} as {data_type} data")
             except Exception as e:  # pylint: disable=broad-except
@@ -309,6 +314,18 @@ if st.session_state.get("task_info") and st.button("Start Training", type="prima
                         meta_features=st.session_state.get("meta_features"),
                     )
 
+                with st.spinner("Training FLAML AutoML Baseline..."):
+                    flaml_time_budget = int(CONFIG["training"].get("flaml_time_budget", 60))
+                    flaml_model, flaml_metrics = train_flaml_baseline(
+                        task_info=task_info,
+                        train_data=train_data,
+                        val_data=val_data,
+                        models_dir=MODELS_DIR,
+                        time_budget=flaml_time_budget
+                    )
+                    st.session_state["flaml_model"] = flaml_model
+                    st.session_state["flaml_metrics"] = flaml_metrics
+
                 if not trained_models:
                     st.error("All training configurations failed. Check logs and data quality.")
                 else:
@@ -384,6 +401,23 @@ if st.session_state.get("best_model_result") and st.session_state.get("task_info
         label_names = [str(v) for v in metrics.get("labels", [])]
         cm_path = save_confusion_matrix(metrics["confusion_matrix"], label_names, PLOTS_DIR / "confusion_matrix.png")
         st.image(str(cm_path), caption="Confusion Matrix", width="stretch")
+
+    # Comparative Dashboard
+    flaml_metrics = st.session_state.get("flaml_metrics")
+    if flaml_metrics:
+        st.subheader("Comparative Dashboard: Optuna DL vs FLAML Baseline")
+        dl_metric_val = float(best.val_metric)
+        flaml_metric_val = float(flaml_metrics.get("val_metric", 0.0))
+        
+        comp_df = pd.DataFrame({
+            "Model": ["Best Optuna DL", "FLAML Baseline"],
+            "Validation Metric": [dl_metric_val, flaml_metric_val]
+        })
+        st.bar_chart(comp_df.set_index("Model"))
+        
+        st.write(f"**FLAML Best Estimator:** {flaml_metrics.get('best_estimator')}")
+        with st.expander("FLAML Best Configuration"):
+            st.json(flaml_metrics.get('best_config', {}))
 
     st.subheader("Test Metrics")
     st.json({k: v for k, v in metrics.items() if k not in {"confusion_matrix", "predictions", "actual", "labels"}})

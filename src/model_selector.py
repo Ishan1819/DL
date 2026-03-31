@@ -45,6 +45,64 @@ class TabularANN(nn.Module):
         return self.network(x)
 
 
+class TabularResNetBlock(nn.Module):
+    """Residual block for TabularResNet."""
+    def __init__(self, dim: int, dropout: float):
+        super().__init__()
+        self.lin1 = nn.Linear(dim, dim)
+        self.bn1 = nn.BatchNorm1d(dim)
+        self.lin2 = nn.Linear(dim, dim)
+        self.bn2 = nn.BatchNorm1d(dim)
+        self.dropout = nn.Dropout(dropout)
+        self.relu = nn.ReLU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Avoid BatchNorm 1D error when batch size is 1 during evaluation/SHAP
+        if x.size(0) > 1:
+            out = self.bn1(self.lin1(x))
+            out = self.relu(out)
+            out = self.dropout(out)
+            out = self.bn2(self.lin2(out))
+            return self.relu(x + out)
+        else:
+            out = self.lin1(x)
+            out = self.relu(out)
+            out = self.dropout(out)
+            out = self.lin2(out)
+            return self.relu(x + out)
+
+
+class TabularResNet(nn.Module):
+    """Residual network for tabular datasets."""
+    def __init__(
+        self,
+        input_dim: int,
+        output_dim: int,
+        hidden_dims: List[int],
+        dropout: float = 0.3,
+        regression: bool = False,
+    ) -> None:
+        super().__init__()
+        width = hidden_dims[0] if hidden_dims else 128
+        num_blocks = max(2, len(hidden_dims))
+        
+        self.input_layer = nn.Sequential(
+            nn.Linear(input_dim, width),
+            nn.ReLU()
+        )
+        self.blocks = nn.ModuleList([
+            TabularResNetBlock(width, dropout) for _ in range(num_blocks)
+        ])
+        self.output_layer = nn.Linear(width, output_dim)
+        self.regression = regression
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.input_layer(x)
+        for block in self.blocks:
+            out = block(out)
+        return self.output_layer(out)
+
+
 class LSTMTimeSeries(nn.Module):
     """Simple LSTM/BiLSTM head for sequence prediction/classification."""
 
@@ -103,7 +161,20 @@ def recommend_model(task_info: TaskInfo, meta_features: Dict[str, float] | None 
                         "output": "Linear",
                     },
                     loss_name="MSELoss",
-                    notes=f"PyTorch ANN for tabular regression [{source_note}]",
+                    notes=f"Standard PyTorch ANN for tabular regression [{source_note}]",
+                )
+            )
+            recs.append(
+                ModelRecommendation(
+                    model_name="TabularResNetRegressor",
+                    architecture={
+                        "blocks": max(2, len(hidden_dims)),
+                        "width": hidden_dims[0] if hidden_dims else 128,
+                        "dropout": dropout,
+                        "output": "Linear",
+                    },
+                    loss_name="MSELoss",
+                    notes=f"Residual Network (TabularResNet) for regression [{source_note}]",
                 )
             )
         else:
@@ -117,7 +188,20 @@ def recommend_model(task_info: TaskInfo, meta_features: Dict[str, float] | None 
                         "output": "Softmax",
                     },
                     loss_name="CrossEntropyLoss",
-                    notes=f"PyTorch ANN for tabular classification [{source_note}]",
+                    notes=f"Standard PyTorch ANN for tabular classification [{source_note}]",
+                )
+            )
+            recs.append(
+                ModelRecommendation(
+                    model_name="TabularResNetClassifier",
+                    architecture={
+                        "blocks": max(2, len(hidden_dims)),
+                        "width": hidden_dims[0] if hidden_dims else 128,
+                        "dropout": dropout,
+                        "output": "Softmax",
+                    },
+                    loss_name="CrossEntropyLoss",
+                    notes=f"Residual Network (TabularResNet) for classification [{source_note}]",
                 )
             )
 
@@ -230,6 +314,7 @@ def generate_configs(task_info: TaskInfo, meta_features: Dict[str, float] | None
             configs.append(
                 {
                     "config_id": i + 1,
+                    "architecture": "ANN" if i % 2 == 0 else "ResNet",
                     "learning_rate": round(lr_variants[i], 6),
                     "batch_size": int(bs_variants[i]),
                     "optimizer": optimizers[i % len(optimizers)],
@@ -258,16 +343,28 @@ def generate_configs(task_info: TaskInfo, meta_features: Dict[str, float] | None
 
 
 def build_tabular_model(task_info: TaskInfo, config: Dict[str, Any]) -> nn.Module:
-    """Create tabular ANN model from detected task and config."""
+    """Create tabular ANN or ResNet model from detected task and config."""
     regression = "regression" in task_info.task_type
     output_dim = 1 if regression else max(task_info.num_classes, 2)
     input_dim = int(config.get("input_dim", task_info.num_features))
-    # hidden_dims now comes from the surrogate recommendation (via generate_configs)
-    # rather than a fixed default.  We keep [128, 64, 32] only as last-resort fallback.
-    return TabularANN(
-        input_dim=input_dim,
-        output_dim=output_dim,
-        hidden_dims=config.get("hidden_dims", [128, 64, 32]),
-        dropout=float(config.get("dropout", 0.3)),
-        regression=regression,
-    )
+    hidden_dims = config.get("hidden_dims", [128, 64, 32])
+    dropout = float(config.get("dropout", 0.3))
+    
+    arch_type = config.get("architecture", "ANN")
+    
+    if arch_type == "ResNet":
+        return TabularResNet(
+            input_dim=input_dim,
+            output_dim=output_dim,
+            hidden_dims=hidden_dims,
+            dropout=dropout,
+            regression=regression,
+        )
+    else:
+        return TabularANN(
+            input_dim=input_dim,
+            output_dim=output_dim,
+            hidden_dims=hidden_dims,
+            dropout=dropout,
+            regression=regression,
+        )
