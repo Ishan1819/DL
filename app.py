@@ -344,7 +344,7 @@ if st.session_state.get("task_info") and st.button("Start Training", type="prima
                         suggestion = suggest_config_with_llm(
                             previous_results=prior,
                             meta_features=st.session_state.get("meta_features"),
-                            llm_provider=CONFIG["api"].get("use_llm", "gemini"),
+                            llm_provider=CONFIG["api"].get("use_llm", "groq"),
                             api_keys=CONFIG["api"],
                         )
                         st.session_state["llm_suggestion"] = suggestion
@@ -495,7 +495,7 @@ if st.session_state.get("xai_results") and st.session_state.get("test_metrics"):
                     ),
                 },
                 metrics=st.session_state["test_metrics"],
-                llm_provider=CONFIG["api"].get("use_llm", "gemini"),
+                llm_provider=CONFIG["api"].get("use_llm", "groq"),
                 api_keys=CONFIG["api"],
             )
             st.session_state["llm_report"] = report
@@ -548,7 +548,7 @@ if st.session_state.get("llm_report"):
                 answer = ask_llm_question(
                     question=user_q,
                     context=chat_context,
-                    llm_provider=CONFIG["api"].get("use_llm", "gemini"),
+                    llm_provider=CONFIG["api"].get("use_llm", "groq"),
                     api_keys=CONFIG["api"],
                 )
             st.markdown(answer)

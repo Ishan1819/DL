@@ -9,7 +9,8 @@ Production-ready Streamlit system to:
 5. Train multiple configs with Optuna + early stopping.
 6. Evaluate and select best model.
 7. Generate SHAP + LIME explainability artifacts.
-8. Generate natural-language findings with Gemini/Claude (or fallback report).
+8. Generate natural-language findings with Groq/Gemini/Claude (or fallback report).
+9. Train a FLAML baseline model alongside Optuna deep learning models.
 
 ## Project Structure
 
@@ -21,7 +22,8 @@ Production-ready Streamlit system to:
 - `src/model_selector.py`: architecture recommendations + config generation
 - `src/trainer.py`: Optuna training, best-model selection, evaluation
 - `src/explainer.py`: SHAP + LIME generation
-- `src/llm_generator.py`: Gemini/Claude report generation
+- `src/llm_generator.py`: Groq/Gemini/Claude report generation and interactive Q&A
+- `src/flaml_trainer.py`: FLAML baseline training for tabular datasets
 - `src/utils.py`: logging, plotting, utility helpers
 - `app.py`: Streamlit UI workflow
 - `config.yaml`: API/training/paths configuration
@@ -38,8 +40,9 @@ Production-ready Streamlit system to:
    - `pip install -r requirements.txt`
 3. Update API keys in `config.yaml`:
    - `api.claude_api_key`
+   - `api.groq_api_key`
    - `api.gemini_api_key`
-   - `api.use_llm` (`gemini` or `claude`)
+   - `api.use_llm` (`groq`, `gemini`, or `claude`)
 
 ## Run
 

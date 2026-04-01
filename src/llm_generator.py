@@ -4,7 +4,10 @@ import json
 import warnings
 from typing import Any, Dict, List, Optional
 
-import anthropic
+try:
+    import anthropic
+except Exception:  # pylint: disable=broad-except
+    anthropic = None
 
 try:
     import groq as groq_sdk
@@ -73,10 +76,11 @@ def generate_explanation(
     api_keys: Dict[str, str],
 ) -> str:
     """Generate natural-language explanation using Groq, Gemini, or Claude API."""
+    provider = (llm_provider or "groq").lower().strip()
     prompt = _build_prompt(xai_results, model_info, metrics)
 
     # \u2500\u2500 Groq (primary) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    if llm_provider.lower() == "groq":
+    if provider == "groq":
         api_key = api_keys.get("groq_api_key", "")
         if not api_key or "YOUR_" in api_key:
             return "Groq API key not configured. Showing fallback report.\n\n" + _fallback_report(model_info, metrics, xai_results)
@@ -97,7 +101,7 @@ def generate_explanation(
             return "Groq call failed. Showing fallback report.\n\n" + _fallback_report(model_info, metrics, xai_results)
 
     # \u2500\u2500 Gemini \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    if llm_provider.lower() == "gemini":
+    if provider == "gemini":
         api_key = api_keys.get("gemini_api_key", "")
         if not api_key or "YOUR_" in api_key:
             return "Gemini API key not configured. Showing fallback report.\n\n" + _fallback_report(model_info, metrics, xai_results)
@@ -119,10 +123,12 @@ def generate_explanation(
             return "LLM call failed. Showing fallback report.\n\n" + _fallback_report(model_info, metrics, xai_results)
 
     # \u2500\u2500 Claude \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    if llm_provider.lower() == "claude":
+    if provider == "claude":
         api_key = api_keys.get("claude_api_key", "")
         if not api_key or "YOUR_" in api_key:
             return "Claude API key not configured. Showing fallback report.\n\n" + _fallback_report(model_info, metrics, xai_results)
+        if anthropic is None:
+            return "anthropic package not installed. Run: pip install anthropic\n\n" + _fallback_report(model_info, metrics, xai_results)
         try:
             client = anthropic.Anthropic(api_key=api_key)
             message = client.messages.create(
@@ -168,7 +174,9 @@ def _fallback_report(model_info: Dict[str, Any], metrics: Dict[str, Any], xai_re
 
 def _call_llm(prompt: str, llm_provider: str, api_keys: Dict[str, str]) -> str:
     """Dispatch a raw prompt to Gemini, Claude, or Groq and return the text response."""
-    if llm_provider.lower() == "groq":
+    provider = (llm_provider or "groq").lower().strip()
+
+    if provider == "groq":
         api_key = api_keys.get("groq_api_key", "")
         if not api_key or "YOUR_" in api_key:
             return ""
@@ -188,7 +196,7 @@ def _call_llm(prompt: str, llm_provider: str, api_keys: Dict[str, str]) -> str:
             LOGGER.exception("Groq API failed: %s", e)
         return ""
 
-    if llm_provider.lower() == "gemini":
+    if provider == "gemini":
         api_key = api_keys.get("gemini_api_key", "")
         if not api_key or "YOUR_" in api_key:
             return ""
@@ -208,9 +216,12 @@ def _call_llm(prompt: str, llm_provider: str, api_keys: Dict[str, str]) -> str:
             LOGGER.exception("Gemini API failed: %s", e)
         return ""
 
-    if llm_provider.lower() == "claude":
+    if provider == "claude":
         api_key = api_keys.get("claude_api_key", "")
         if not api_key or "YOUR_" in api_key:
+            return ""
+        if anthropic is None:
+            LOGGER.warning("anthropic package not installed. Run: pip install anthropic")
             return ""
         try:
             client = anthropic.Anthropic(api_key=api_key)
